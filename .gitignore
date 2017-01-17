@@ -21,3 +21,6 @@ erl_crash.dump
 
 # Ignore infamous .DS_Store files.
 *.DS_Store
+
+# Hide my Telegram token.
+/config/token.exs

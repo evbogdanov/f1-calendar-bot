@@ -1,18 +1,7 @@
 defmodule F1CalendarBot do
-  @moduledoc """
-  Documentation for F1CalendarBot.
-  """
+  use Application
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> F1CalendarBot.hello
-      :world
-
-  """
-  def hello do
-    :world
+  def start(_type, _args) do
+    F1CalendarBot.Supervisor.start_link
   end
 end
