@@ -19,6 +19,12 @@ $ mix deps.get
 $ mix compile
 ```
 
+## Commands
+
+`/start` - Welcome message and the list of available commands
+`/next` - When is the next Grand Prix
+`/prev` - When was the previous Grand Prix
+
 ## Testing
 
 ```
