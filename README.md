@@ -16,3 +16,9 @@ Then, get dependencies and compile everything:
 $ mix deps.get
 $ mix compile
 ```
+
+## Testing
+
+```
+$ mix test
+```
