@@ -2,6 +2,8 @@
 
 @F1CalendarBot for Telegram
 
+![](priv/botpic.png)
+
 ## Installation
 
 To access the Telegram API, get token from BotFather and put it in `config/token.exs`
