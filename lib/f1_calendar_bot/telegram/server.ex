@@ -2,6 +2,7 @@ defmodule F1CalendarBot.Telegram.Server do
   use GenServer
 
   alias F1CalendarBot.Telegram
+  alias F1CalendarBot.GrandPrix
 
   ## API
   ## -----------------------------------------------------------------------------
@@ -14,15 +15,26 @@ defmodule F1CalendarBot.Telegram.Server do
   ## -----------------------------------------------------------------------------
 
   def init(:ok) do
-    {offset, body} = {0, ""}
+    # Initial state
+    offset = 0
+    body   = ""
 
-    # Start long polling
-    {:ok, client_ref} = Telegram.get_updates_async(offset)
+    # Fetch grands prix for 2017 season
+    gps     = GrandPrix.from_file_in_priv_dir("2017.json")
+    gp_next = GrandPrix.next(gps)
+    gp_prev = GrandPrix.prev(gps)
+    # TODO: `send_after` to recalculate gp_next and gp_prev
 
-    state = %{offset: offset,
-              client_ref: client_ref,
-              body: body}
+    # Start long polling.
+    # Return client_ref to fetch updates later in `handle_info`.
+    {:ok, ref} = Telegram.get_updates_async(offset)
 
+    state = %{offset:     offset,
+              client_ref: ref,
+              body:       body,
+              gps:        gps,
+              gp_next:    gp_next,
+              gp_prev:    gp_prev}
     {:ok, state}
   end
 
@@ -46,13 +58,13 @@ defmodule F1CalendarBot.Telegram.Server do
         offset2 = Telegram.updates_offset(updates, state.offset)
 
         # Send messages to users
-        Enum.each(updates, &handle_update/1)
+        Enum.each(updates, fn(upd) -> handle_update(upd, state) end)
 
         # Continue the polling
         {:ok, ref2} = Telegram.get_updates_async(offset2)
-        state2 = %{offset: offset2,
-                   client_ref: ref2,
-                   body: ""}
+        state2 = %{state | :offset     => offset2,
+                           :client_ref => ref2,
+                           :body       => ""}
         
         {:noreply, state2}
       body ->
@@ -63,7 +75,7 @@ defmodule F1CalendarBot.Telegram.Server do
   end
 
   def handle_info({:hackney_response, ref, _res}, state) do
-    :error_logger.warning_msg('unexpected hackney ref: ~p~n', [ref])
+    :error_logger.warning_msg('Unexpected hackney ref: ~p~n', [ref])
     {:noreply, state}
   end
 
@@ -74,16 +86,32 @@ defmodule F1CalendarBot.Telegram.Server do
   ## INTERNAL FUNCTIONS
   ## -----------------------------------------------------------------------------
 
-  def handle_update(%{"message" => %{"from" => %{"id" => id}, "text" => text}}) do
+  defp handle_update(
+    %{"message" => %{"from" => %{"id" => id}, "text" => text}},
+    state
+  ) do
     msg = case text do
-            "/next"  -> "Reply to /next"
-            "/prev"  -> "Reply to /prev"
-            _unknown -> "What'd you like to know?\n\n/next - When is the next Grand Prix\n/prev - When was the previous Grand Prix"
+            "/next" ->
+              if gp_next = state.gp_next do
+                gp_next.name
+              else
+                "Don't know"
+              end
+            "/prev" ->
+              if gp_prev = state.gp_prev do
+                gp_prev.name
+              else
+                "Don't know"
+              end
+            _unknown ->
+              "What'd you like to know?\n\n" <>
+              "/next - When is the next Grand Prix\n" <>
+              "/prev - When was the previous Grand Prix"
           end
     Telegram.send_message(id, msg)
   end
 
-  def handle_update(upd) do
+  defp handle_update(upd, _state) do
     :error_logger.warning_msg('Unexpected update: ~p~n', [upd])
   end
 
