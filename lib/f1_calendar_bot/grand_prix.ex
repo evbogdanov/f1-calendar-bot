@@ -5,6 +5,9 @@ defmodule F1CalendarBot.GrandPrix do
   alias F1CalendarBot.GrandPrix
   alias F1CalendarBot.Cal
 
+  ## API
+  ## -----------------------------------------------------------------------------
+
   def from_file_in_priv_dir(file_name) do
     priv_dir = Application.app_dir(:f1_calendar_bot, "priv")
     path     = Path.join(priv_dir, file_name)

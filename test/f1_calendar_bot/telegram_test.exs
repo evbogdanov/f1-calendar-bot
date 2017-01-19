@@ -23,4 +23,18 @@ defmodule F1CalendarBot.TelegramTest do
     = Telegram.send_message(295371074, "hello, ev")
   end
 
+  test "offset = update_id of last processed update + 1" do
+    assert 0  == Telegram.updates_offset([])
+    assert 13 == Telegram.updates_offset([], 13)
+    
+    updates = [%{"message" => %{},
+                 "update_id" => 1},
+               %{"message" => %{},
+                 "update_id" => 2},
+               %{"message" => %{},
+                 "update_id" => 3}]
+    assert 4 == Telegram.updates_offset(updates)
+    assert 4 == Telegram.updates_offset(updates, 13)
+  end
+
 end

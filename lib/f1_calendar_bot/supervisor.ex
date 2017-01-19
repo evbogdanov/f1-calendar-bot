@@ -6,7 +6,9 @@ defmodule F1CalendarBot.Supervisor do
   end
 
   def init(:ok) do
-    children = []
+    children = [
+      worker(F1CalendarBot.Telegram.Server, []),
+    ]
     supervise(children, strategy: :one_for_one)
   end
 end
