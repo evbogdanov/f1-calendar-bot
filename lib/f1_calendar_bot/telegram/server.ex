@@ -20,10 +20,11 @@ defmodule F1CalendarBot.Telegram.Server do
     body   = ""
 
     # Fetch grands prix for 2017 season
-    gps     = GrandPrix.from_file_in_priv_dir("2017.json")
-    gp_next = GrandPrix.next(gps)
-    gp_prev = GrandPrix.prev(gps)
-    # TODO: `send_after` to recalculate gp_next and gp_prev
+    gps = GrandPrix.from_file_in_priv_dir("2017.json")
+
+    # Set initial when_next/when_prev and schedule their changes
+    {when_next, when_prev} = when_next_prev(gps)
+    schedule_next_prev_changes()
 
     # Start long polling.
     # Return client_ref to fetch updates later in `handle_info`.
@@ -33,8 +34,8 @@ defmodule F1CalendarBot.Telegram.Server do
               client_ref: ref,
               body:       body,
               gps:        gps,
-              gp_next:    gp_next,
-              gp_prev:    gp_prev}
+              when_next:  when_next,
+              when_prev:  when_prev}
     {:ok, state}
   end
 
@@ -79,6 +80,14 @@ defmodule F1CalendarBot.Telegram.Server do
     {:noreply, state}
   end
 
+  def handle_info(:next_prev_changes, state) do
+    {when_next, when_prev} = when_next_prev(state.gps)
+    state2 = %{state | :when_next => when_next,
+                       :when_prev => when_prev}
+    schedule_next_prev_changes()
+    {:noreply, state2}
+  end
+
   def handle_info(_info, state) do
     {:noreply, state}
   end
@@ -92,9 +101,9 @@ defmodule F1CalendarBot.Telegram.Server do
   ) do
     msg = case text do
             "/next" ->
-              GrandPrix.when_next(state.gp_next)
+              state.when_next
             "/prev" ->
-              GrandPrix.when_prev(state.gp_prev)
+              state.when_prev
             _unknown ->
               "What'd you like to know?\n\n" <>
               "/next - When is the next Grand Prix\n" <>
@@ -105,6 +114,16 @@ defmodule F1CalendarBot.Telegram.Server do
 
   defp handle_update(upd, _state) do
     :error_logger.warning_msg('Unexpected update: ~p~n', [upd])
+  end
+
+  defp schedule_next_prev_changes do
+    Process.send_after(self(), :next_prev_changes, 60_000)
+  end
+
+  defp when_next_prev(gps) do
+    when_next = GrandPrix.next(gps) |> GrandPrix.when_next()
+    when_prev = GrandPrix.prev(gps) |> GrandPrix.when_prev()
+    {when_next, when_prev}
   end
 
 end
