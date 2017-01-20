@@ -69,4 +69,29 @@ defmodule F1CalendarBot.GrandPrixTest do
     == %GrandPrix{name: "1", date: ~D[2017-01-01]}
   end
 
+  test "when is the next grand prix" do
+    assert <<"Sorry", _ :: binary>> = GrandPrix.when_next(nil)
+    assert <<"Sorry", _ :: binary>> = GrandPrix.when_next(nil, ~D[2017-01-01])
+
+    assert "The 1 is today!"
+    == GrandPrix.when_next(%GrandPrix{name: "1", date: ~D[2017-01-01]}, ~D[2017-01-01])
+
+    assert "The 2 is tomorrow"
+    == GrandPrix.when_next(%GrandPrix{name: "2", date: ~D[2017-02-02]}, ~D[2017-02-01])
+
+    assert "The 3 is in 2 days"
+    == GrandPrix.when_next(%GrandPrix{name: "3", date: ~D[2017-03-03]}, ~D[2017-03-01])
+  end
+
+  test "when was the previous grand prix" do
+    assert <<"Sorry", _ :: binary>> = GrandPrix.when_prev(nil)
+    assert <<"Sorry", _ :: binary>> = GrandPrix.when_prev(nil, ~D[2017-01-01])
+
+    assert "The 2 was yesterday"
+    == GrandPrix.when_prev(%GrandPrix{name: "2", date: ~D[2017-02-02]}, ~D[2017-02-03])
+
+    assert "The 3 was 3 days ago"
+    == GrandPrix.when_prev(%GrandPrix{name: "3", date: ~D[2017-03-03]}, ~D[2017-03-06])
+  end
+
 end
