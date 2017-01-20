@@ -41,6 +41,25 @@ defmodule F1CalendarBot.GrandPrix do
     |> find_prev(today)
   end
 
+  def when_next(nil), do: "Sorry, I have no idea"
+
+  def when_next(%GrandPrix{name: name, date: date}) do
+    case Cal.days_between(date, Date.utc_today()) do
+      0    -> "The #{name} is today!"
+      1    -> "The #{name} is tomorrow"
+      days -> "The #{name} is in #{days} days"
+    end
+  end
+
+  def when_prev(nil), do: "Sorry, I don't know"
+
+  def when_prev(%GrandPrix{name: name, date: date}) do
+    case Cal.days_between(date, Date.utc_today()) do
+      1    -> "The #{name} was yesterday"
+      days -> "The #{name} was #{days} days ago"
+    end
+  end
+
   ## INTERNAL FUNCTIONS   
   ## -----------------------------------------------------------------------------
 

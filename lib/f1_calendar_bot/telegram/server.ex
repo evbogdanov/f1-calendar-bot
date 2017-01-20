@@ -92,17 +92,9 @@ defmodule F1CalendarBot.Telegram.Server do
   ) do
     msg = case text do
             "/next" ->
-              if gp_next = state.gp_next do
-                gp_next.name
-              else
-                "Don't know"
-              end
+              GrandPrix.when_next(state.gp_next)
             "/prev" ->
-              if gp_prev = state.gp_prev do
-                gp_prev.name
-              else
-                "Don't know"
-              end
+              GrandPrix.when_prev(state.gp_prev)
             _unknown ->
               "What'd you like to know?\n\n" <>
               "/next - When is the next Grand Prix\n" <>
